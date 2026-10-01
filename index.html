@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS HUD - Interface</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* JARVIS HUD Interface - CSS Completo e Revisado */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --hud-blue: #00d4ff;
+            --hud-cyan: #00ffff;
+            --hud-dark: #0a0a0a;
+            --hud-darker: #050505;
+            --hud-gray: #1a1a1a;
+            --hud-light-gray: #2a2a2a;
+            --hud-text: #ffffff;
+            --hud-text-dim: #cccccc;
+            --hud-accent: #ff6b35;
+            --hud-success: #00ff88;
+            --hud-warning: #ffaa00;
+            --hud-error: #ff3366;
+            --hud-grid: rgba(0, 212, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Orbitron', monospace;
+            background: var(--hud-darker);
+            color: var(--hud-text);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Grid Background */
+        .grid-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(var(--hud-grid) 1px, transparent 1px),
+                linear-gradient(90deg, var(--hud-grid) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            animation: gridMove 20s linear infinite;
+        }
+
+        /* Main HUD Container */
+        .hud-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: grid;
+            grid-template-areas: 
+                "top-left center top-right"
+                "left-side center right-side";
+            grid-template-columns: 1fr 2fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #000000 0%, #0a0a0a 30%, #1a1a2e 70%, #000000 100%);
+        }
+
+        /* HUD Panels */
+        .hud-panel {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--hud-blue);
+            border-radius: 10px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ==========================================
+           TOP LEFT - EARTH CORE STATUS
+           ========================================== */
+        .top-left {
+            grid-area: top-left;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid var(--hud-blue);
+        }
+
+        .earth-hologram {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Globo CSS Puro (Fundo) */
+        .globe-css {
+            position: relative;
+            width: 170px;
+            height: 170px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 212, 255, 0.4);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.2) inset;
+            perspective: 1000px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .globe-inner {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            transform-style: preserve-3d;
+        }
+
+        .globe-latitude, .globe-longitude {
+            position: absolute;
+            border: 2px solid var(--hud-blue);
+            border-radius: 50%;
+            top: 0; left: 0; right: 0; bottom: 0;
+            margin: auto;
+            box-shadow: 0 0 10px var(--hud-blue), inset 0 0 10px var(--hud-blue);
+        }
+
+        .globe-latitude { width: 100%; height: 100%; transform: rotateX(90deg); }
+        .globe-latitude.lat-2 { width: 85%; height: 85%; transform: rotateX(90deg) translateZ(40px); }
+        .globe-latitude.lat-3 { width: 85%; height: 85%; transform: rotateX(90deg) translateZ(-40px); }
+        .globe-longitude { width: 100%; height: 100%; }
+        .globe-longitude.lon-2 { transform: rotateY(45deg); }
+        .globe-longitude.lon-3 { transform: rotateY(90deg); }
+        .globe-longitude.lon-4 { transform: rotateY(135deg); }
+
+        /* Imagem Híbrida do Globo */
+        .earth-hybrid-img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 140%;
+            height: auto;
+            object-fit: contain;
+            mix-blend-mode: screen;
+            opacity: 0.9;
+            z-index: 5;
+            pointer-events: none;
+			animation: imagePulse 4s ease-in-out infinite;
+        }
+
+        .status-display { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .status-line { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; }
+        .label { font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); letter-spacing: 1px; }
+        .value { font-size: 0.9rem; color: rgba(255, 255, 255, 0.8); font-weight: 700; letter-spacing: 1px; }
+        .value.active { color: rgba(0, 255, 136, 0.9); text-shadow: 0 0 5px rgba(0, 255, 136, 0.5); }
+
+        /* ==========================================
+           CENTER - MAIN HUD
+           ========================================== */
+        .center {
+            grid-area: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            position: relative;
+            background: #000000;
+        }
+
+        .hologram-container {
+            position: relative;
+            width: 300px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Anéis CSS no Fundo do Centro */
+        .hologram-core {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin-bottom: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hologram-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid transparent;
+        }
+
+        .ring-1 { width: 100%; height: 100%; border-top: 2px solid var(--hud-blue); border-bottom: 2px solid var(--hud-blue); animation: spinRight 6s linear infinite; box-shadow: 0 0 15px var(--hud-blue) inset; }
+        .ring-2 { width: 80%; height: 80%; border-left: 2px solid var(--hud-cyan); border-right: 2px solid var(--hud-cyan); animation: spinLeft 4s linear infinite; box-shadow: 0 0 10px var(--hud-cyan); }
+        .ring-3 { width: 60%; height: 60%; border-top: 2px dashed var(--hud-accent); animation: spinRight 3s linear infinite; }
+        .hologram-center { width: 20px; height: 20px; background: var(--hud-cyan); border-radius: 50%; box-shadow: 0 0 30px 10px var(--hud-cyan); animation: centerPulse 2s ease-in-out infinite; }
+
+        /* NOVA IMAGEM DE CORPO INTEIRO HÍBRIDA */
+        .android-full-img {
+            position: absolute;
+            top: 50%; 
+            left: 50%;
+            transform: translate(-50%, -50%);
+            height: 380px; /* Definido pela altura para não cortar */
+            width: auto;
+            object-fit: contain;
+            mix-blend-mode: screen;
+            filter: contrast(1.5) brightness(1.2); /* Força o cinza a desaparecer */
+            opacity: 0.95;
+            z-index: 5;
+            pointer-events: none;
+            animation: fullAndroidFloat 6s ease-in-out infinite; /* Flutuação suave */
+        }
+
+        .jarvis-label { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 10; }
+        .jarvis-label h1 { font-size: 1.8rem; font-weight: 900; color: var(--hud-blue); text-shadow: 0 0 20px var(--hud-blue); letter-spacing: 3px; margin: 0; animation: textGlow 4s ease-in-out infinite; }
+        .label-line { width: 100%; height: 2px; background: var(--hud-cyan); margin-top: 5px; box-shadow: 0 0 10px var(--hud-cyan); animation: linePulse 3s ease-in-out infinite; }
+
+        .voice-controls { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 90px; }
+        .voice-button { width: 80px; height: 80px; background: linear-gradient(45deg, var(--hud-blue), var(--hud-cyan)); border: 2px solid var(--hud-blue); border-radius: 50%; color: var(--hud-dark); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; box-shadow: 0 0 30px var(--hud-blue); position: relative; overflow: hidden; }
+        .voice-button.listening { background: linear-gradient(45deg, var(--hud-success), #00ff88); border-color: var(--hud-success); box-shadow: 0 0 40px var(--hud-success); animation: voicePulse 1s infinite; }
+        .voice-status { text-align: center; min-height: 1.5rem; }
+        .status-text { color: var(--hud-text); font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; transition: all 0.3s ease; }
+
+        /* ==========================================
+           TOP RIGHT - RADAR SYSTEM
+           ========================================== */
+        .top-right {
+            grid-area: top-right;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .radar-hologram {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Radar CSS Puro */
+        .radar-css {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--hud-success);
+            background: rgba(0, 255, 136, 0.05);
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+        }
+
+        .radar-grid { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; height: 100%; border-radius: 50%; border: 1px solid rgba(0, 255, 136, 0.3); }
+        .radar-grid::before, .radar-grid::after { content: ''; position: absolute; background: rgba(0, 255, 136, 0.3); }
+        .radar-grid::before { top: 0; left: 50%; width: 1px; height: 100%; }
+        .radar-grid::after { top: 50%; left: 0; width: 100%; height: 1px; }
+        .radar-sweep { position: absolute; top: 50%; left: 50%; width: 50%; height: 50%; background: conic-gradient(from 0deg, transparent 70%, rgba(0, 255, 136, 0.8) 100%); transform-origin: 0% 0%; animation: radarSweep 4s linear infinite; }
+        .radar-blip { position: absolute; width: 6px; height: 6px; background: var(--hud-success); border-radius: 50%; top: 30%; left: 60%; box-shadow: 0 0 10px var(--hud-success); animation: blipFade 4s ease-out infinite; }
+
+        /* Imagem Híbrida do Radar */
+        .radar-hybrid-img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 110%;
+            height: auto;
+            object-fit: contain;
+            mix-blend-mode: screen;
+            opacity: 0.9;
+            z-index: 5;
+            pointer-events: none;
+            animation: imagePulse 4s ease-in-out infinite;
+        }
+
+        .radar-status { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center; width: 100%; }
+        .radar-status .online { color: rgba(0, 255, 136, 0.9); text-shadow: 0 0 5px rgba(0, 255, 136, 0.5); font-weight: 700; margin-top: 5px;}
+
+        /* ==========================================
+           LEFT & RIGHT SIDE PANELS
+           ========================================== */
+        .left-side { grid-area: left-side; display: flex; flex-direction: column; gap: 20px; }
+        .right-side { grid-area: right-side; display: flex; flex-direction: column; gap: 20px; }
+
+        .loading-systems { display: flex; flex-direction: column; gap: 15px; }
+        .loading-item { display: flex; flex-direction: column; gap: 8px; }
+        .loading-text { font-size: 0.8rem; color: var(--hud-text-dim); letter-spacing: 1px; text-transform: uppercase; }
+        .loading-bar { width: 100%; height: 4px; background: rgba(0, 212, 255, 0.2); border-radius: 2px; overflow: hidden; }
+        .loading-progress { height: 100%; background: linear-gradient(90deg, var(--hud-blue), var(--hud-cyan)); border-radius: 2px; animation: loadingPulse 2s ease-in-out infinite; }
+
+        .data-log { flex: 1; background: rgba(0, 212, 255, 0.05); border: 1px solid var(--hud-blue); border-radius: 5px; padding: 15px; overflow: hidden; }
+        .log-content { display: flex; flex-direction: column; gap: 8px; }
+        .log-line { font-size: 0.7rem; color: var(--hud-text-dim); letter-spacing: 1px; animation: logScroll 0.5s ease-out; }
+
+        /* ==========================================
+           ANIMATIONS
+           ========================================== */
+        @keyframes gridMove { 0% { transform: translate(0, 0); } 100% { transform: translate(50px, 50px); } }
+        @keyframes spinRight { 100% { transform: rotate(360deg); } }
+        @keyframes spinLeft { 100% { transform: rotate(-360deg); } }
+        @keyframes centerPulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 20px var(--hud-blue); } 50% { transform: scale(1.1); box-shadow: 0 0 30px var(--hud-blue); } }
+        @keyframes radarSweep { 100% { transform: rotate(360deg); } }
+        @keyframes blipFade { 0% { opacity: 0; } 5% { opacity: 1; transform: scale(1.5); } 30% { opacity: 0; transform: scale(1); } 100% { opacity: 0; } }
+        @keyframes voicePulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 30px var(--hud-success); } 50% { transform: scale(1.1); box-shadow: 0 0 40px var(--hud-success); } }
+        @keyframes logScroll { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes loadingPulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
+        @keyframes imagePulse { 0%, 100% { transform: translate(-50%, -50%) scale(1); filter: brightness(1); } 50% { transform: translate(-50%, -50%) scale(1.05); filter: brightness(1.3); } }
+        
+        /* Gira e pulsa a esfera terrestre */
+        @keyframes coreSpin { 
+            0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); filter: brightness(1); } 
+            50% { transform: translate(-50%, -50%) rotate(180deg) scale(1.05); filter: brightness(1.2); } 
+            100% { transform: translate(-50%, -50%) rotate(360deg) scale(1); filter: brightness(1); } 
+        }
+
+			/* Animação de Balanço 3D (Efeito Parallax Holográfico) */
+			@keyframes fullAndroidFloat { 
+				0%   { transform: translate(-50%, -50%) rotateY(-25deg); } 
+				50%  { transform: translate(-50%, -54%) rotateY(25deg); } 
+				100% { transform: translate(-50%, -50%) rotateY(-25deg); } 
+			}
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Grid -->
+    <div class="grid-background"></div>
+
+    <div class="hud-container">
+        
+        <!-- TOP LEFT: Earth Core -->
+        <div class="hud-panel top-left">
+            <div class="status-display">
+                <div class="status-line"><span class="label">EARTH CORE STATUS</span></div>
+            </div>
+            <div class="earth-hologram">
+                <div class="globe-css">
+                    <div class="globe-inner">
+                        <div class="globe-longitude"></div>
+                        <div class="globe-longitude lon-2"></div>
+                        <div class="globe-longitude lon-3"></div>
+                        <div class="globe-longitude lon-4"></div>
+                        <div class="globe-latitude"></div>
+                        <div class="globe-latitude lat-2"></div>
+                        <div class="globe-latitude lat-3"></div>
+                    </div>
+                </div>
+                <!-- Imagem do globo -->
+                <img src="jarvis10.jpg" class="earth-hybrid-img">
+            </div>
+            <div class="status-display">
+                <div class="status-line">
+                    <span class="label">NETWORK</span>
+                    <span class="value active">ONLINE</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- CENTER: Main HUD (Android Corpo Inteiro) -->
+        <div class="center">
+            <div class="hologram-container">
+                <div class="hologram-core">
+                    <div class="hologram-ring ring-1"></div>
+                    <div class="hologram-ring ring-2"></div>
+                    <div class="hologram-ring ring-3"></div>
+                    <div class="hologram-center"></div>
+                </div>
+                <!-- Nova Imagem Jarvis Inteiro -->
+                <img src="jarvis_inteiro.jpg" class="android-full-img">
+            </div>
+
+            <div class="jarvis-label">
+                <h1>JARVIS</h1>
+                <div class="label-line"></div>
+            </div>
+
+            <div class="voice-controls">
+                <button class="voice-button" id="voiceBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                </button>
+                <div class="voice-status">
+                    <span class="status-text" id="voiceStatusText">AGUARDANDO COMANDO</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOP RIGHT: Tracking System -->
+        <div class="hud-panel top-right">
+            <div class="status-display" style="position: absolute; top: 20px; width: 90%;">
+                <div class="status-line"><span class="label">TRACKING SYSTEM</span></div>
+            </div>
+            <div class="radar-hologram">
+                <div class="radar-css">
+                    <div class="radar-grid"></div>
+                    <div class="radar-sweep"></div>
+                    <div class="radar-blip"></div>
+                </div>
+                <!-- Imagem do diagnóstico -->
+                <img src="jarvis4.jpg" class="radar-hybrid-img pulse-anim">
+            </div>
+            <div class="radar-status">
+                <div class="status-text">RADAR ACTIVE</div>
+                <div class="online">ONLINE</div>
+            </div>
+        </div>
+
+        <!-- LEFT SIDE: Loading Systems -->
+        <div class="hud-panel left-side">
+            <div class="loading-systems">
+                <div class="loading-item">
+                    <span class="loading-text">SYSTEM BOOT 66UL-054</span>
+                    <div class="loading-bar"><div class="loading-progress" style="width: 85%"></div></div>
+                </div>
+                <div class="loading-item">
+                    <span class="loading-text">CORE TEMP YUGOT/289</span>
+                    <div class="loading-bar"><div class="loading-progress" style="width: 60%"></div></div>
+                </div>
+                <div class="loading-item">
+                    <span class="loading-text">ENCRYPTION FALKA?943</span>
+                    <div class="loading-bar"><div class="loading-progress" style="width: 95%"></div></div>
+                </div>
+                <div class="loading-item">
+                    <span class="loading-text">NEURAL NET SYNC</span>
+                    <div class="loading-bar"><div class="loading-progress" style="width: 75%"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDE: System Event Log -->
+        <div class="hud-panel right-side">
+            <div class="status-display">
+                <div class="status-line"><span class="label">SYSTEM EVENT LOG</span></div>
+            </div>
+            <div class="data-log">
+                <div class="log-content">
+                    <span class="log-line">> [NETWORK] SECURE CONNECTION ESTABLISHED</span>
+                    <span class="log-line">> [STATUS] ALL SYSTEMS OPERATIONAL</span>
+                    <span class="log-line">> [READY] AWAITING USER INPUT</span>
+                    <span class="log-line">> [SCAN] ENVIRONMENT ANALYSIS ACTIVE</span>
+                    <span class="log-line">> [SECURE] PROTOCOL 84-X ENGAGED</span>
+                    <span class="log-line">> [POWER] ARC REACTOR AT 98%</span>
+                    <span class="log-line">> [SYSTEM] CALIBRATING SENSORS...</span>
+                    <span class="log-line">> [AUDIO] AWAITING COMMAND</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Script Simples para o Botão de Voz -->
+    <script>
+        const voiceBtn = document.getElementById('voiceBtn');
+        const voiceStatusText = document.getElementById('voiceStatusText');
+        let isListening = false;
+
+        voiceBtn.addEventListener('click', () => {
+            isListening = !isListening;
+            
+            if (isListening) {
+                voiceBtn.classList.add('listening');
+                voiceStatusText.textContent = "OUVINDO...";
+                voiceStatusText.style.color = "var(--hud-success)";
+                voiceStatusText.style.textShadow = "0 0 10px var(--hud-success)";
+            } else {
+                voiceBtn.classList.remove('listening');
+                voiceStatusText.textContent = "AGUARDANDO COMANDO";
+                voiceStatusText.style.color = "var(--hud-text)";
+                voiceStatusText.style.textShadow = "none";
+            }
+        });
+    </script>
+</body>
+</html>
